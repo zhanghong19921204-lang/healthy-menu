@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>四季健康食谱计划 · 父母版（按钮内嵌版）</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --primary: #2e7d32;
+            --light-bg: #f5f9f5;
+            --card-bg: white;
+            --border: #dce7d6;
+            --warning: #d32f2f;
+            --replace-btn: #ff9800;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+            background-color: var(--light-bg);
+            color: #333;
+            line-height: 1.6;
+            padding: 12px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 16px 0;
+        }
+        h1 {
+            color: var(--primary);
+            font-size: 1.8em;
+            margin-bottom: 8px;
+        }
+        .subtitle {
+            color: #555;
+            font-size: 0.95em;
+        }
+
+        /* 季节选择 */
+        .season-tabs {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        .season-tab {
+            padding: 8px 20px;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .season-tab.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* 周计划 */
+        .week-plan {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            margin-bottom: 24px;
+        }
+        .week-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .meal-day {
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px dashed #eee;
+        }
+        .meal-day:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        .day-title {
+            font-weight: bold;
+            color: var(--primary);
+            margin: 12px 0 8px;
+            font-size: 1.1em;
+        }
+        .meal-slot {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin-top: 8px;
+        }
+        .meal-card {
+            background: #fafafa;
+            padding: 14px;
+            border-radius: 10px;
+            border-left: 3px solid var(--primary);
+        }
+        .meal-label {
+            font-weight: bold;
+            margin-bottom: 6px;
+            color: #2e7d32;
+        }
+        .dish-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+            font-size: 0.95em;
+        }
+        .dish-text {
+            flex: 1;
+            word-break: break-word;
+        }
+        .tag {
+            display: inline-block;
+            background: #e8f5e8;
+            color: var(--primary);
+            font-size: 0.8em;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-right: 6px;
+        }
+
+        /* 替换按钮（内嵌） */
+        .replace-btn-inline {
+            background: var(--replace-btn);
+            color: white;
+            border: none;
+            padding: 2px 8px;
+            font-size: 0.75em;
+            border-radius: 10px;
+            cursor: pointer;
+            flex-shrink: 0;
+            margin-left: 8px;
+        }
+
+        /* 外出与早餐 */
+        .note-box {
+            background: #fff8e1;
+            padding: 14px;
+            border-radius: 10px;
+            margin: 16px 0;
+            font-size: 0.95em;
+        }
+        .note-title {
+            font-weight: bold;
+            margin-bottom: 6px;
+            color: #5d4037;
+        }
+
+        /* 按钮组 */
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            flex: 1;
+            min-width: 120px;
+            padding: 12px;
+            font-size: 1em;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        @media (max-width: 600px) {
+            .meal-slot {
+                grid-template-columns: 1fr;
+            }
+            h1 { font-size: 1.5em; }
+            .season-tab { padding: 6px 14px; font-size: 0.9em; }
+            .action-buttons { flex-direction: column; }
+            .dish-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .replace-btn-inline {
+                margin: 4px 0 0 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>四季健康食谱计划</h1>
+            <p class="subtitle">专为60+父母定制 · 低盐低脂控糖 · 高鱼摄入 · 当季食材优先</p>
+        </header>
+
+        <div class="season-tabs">
+            <div class="season-tab active" data-season="spring">春季</div>
+            <div class="season-tab" data-season="summer">夏季</div>
+            <div class="season-tab" data-season="autumn">秋季</div>
+            <div class="season-tab" data-season="winter">冬季</div>
+        </div>
+
+        <div class="week-plan" id="weekPlan">
+            <!-- 内容由JS动态填充 -->
+        </div>
+    </div>
+
+    <script>
+        // 完整四季食谱数据
+        const menuData = {
+            spring: {
+                title: "春季 · 第1周食谱",
+                days: [
+                    { day: "周一", lunch: [{dish:"清蒸鲈鱼",method:"清蒸"},{dish:"蒜蓉鸡毛菜",method:"快炒"},{dish:"豆腐菌菇汤",method:""},{dish:"杂粮饭+蒸玉米",method:""}], dinner: [{dish:"白灼虾",method:"白灼"},{dish:"凉拌米苋",method:"凉拌"},{dish:"紫菜蛋花汤",method:""},{dish:"杂粮饭",method:""}] },
+                    { day: "周二", lunch: [{dish:"红烧大排（减盐代糖）",method:"红烧"},{dish:"清炒小豌豆",method:"清炒"},{dish:"杂粮饭+蒸红薯",method:""}], dinner: [{dish:"蒸三黄鸡",method:"蒸"},{dish:"水芹菜炒香干",method:"快炒"},{dish:"冬瓜虾皮汤",method:""},{dish:"杂粮饭",method:""}] },
+                    { day: "周三", lunch: [{dish:"葱爆牛肉（少油）",method:"葱爆"},{dish:"清炒生菜",method:"清炒"},{dish:"番茄豆腐汤",method:""},{dish:"杂粮饭+玉米",method:""}], dinner: [{dish:"蒲烧鳗鱼（盒马）",method:"电商"},{dish:"蒜蓉西兰花",method:"蒜蓉"},{dish:"杂粮饭",method:""}] },
+                    { day: "周四", lunch: [{dish:"东泰祥冷面（少酱）",method:"外出"},{dish:"生煎×1（去底焦）",method:"外出"}], dinner: [{dish:"烂糊肉丝（瘦肉）",method:"炖"},{dish:"清炒芹菜",method:"清炒"},{dish:"杂粮饭",method:""}] },
+                    { day: "周五", lunch: [{dish:"红烧猪蹄（去浮油，减盐50%）",method:"红烧"},{dish:"清炒青菜",method:"清炒"},{dish:"杂粮饭+红薯",method:""}], dinner: [{dish:"白切三黄鸡",method:"白切"},{dish:"上汤菠菜",method:"煮"},{dish:"杂粮饭",method:""}] },
+                    { day: "周六", lunch: [{dish:"糖醋小排（代糖版）",method:"糖醋"},{dish:"清炒土豆丝",method:"清炒"},{dish:"杂粮饭+玉米",method:""}], dinner: [{dish:"扇贝蒸蛋",method:"蒸"},{dish:"清炒米苋",method:"清炒"},{dish:"杂粮饭",method:""}] },
+                    { day: "周日", lunch: [{dish:"甬小吉炒面（少油加菜）",method:"外出"}], dinner: [{dish:"红烧鸭腿（去皮，减盐）",method:"红烧"},{dish:"清炒荷兰豆",method:"清炒"},{dish:"萝卜丝汤",method:""},{dish:"杂粮饭",method:""}] }
+                ]
+            },
+            summer: {
+                title: "夏季 · 第1周食谱",
+                days: [
+                    { day: "周一", lunch: [{dish:"清蒸鲳鱼",method:"清蒸"},{dish:"凉拌毛豆",method:"凉拌"},{dish:"丝瓜豆腐汤",method:""},{dish:"杂粮饭+蒸玉米",method:""}], dinner: [{dish:"水煮虾",method:"水煮"},{dish:"蒜蓉空心菜",method:"蒜蓉"},{dish:"冬瓜薏米汤",method:""},{dish:"杂粮饭",method:""}] },
+                    { day: "周二", lunch: [{dish:"葱爆牛肉（少油）",method:"葱爆"},{dish:"清炒藕片",method:"清炒"},{dish:"杂粮饭+红薯",method:""}], dinner: [{dish:"白切三黄鸡",method:"白切"},{dish:"凉拌苦瓜",method:"凉拌"},{dish:"番茄蛋汤",method:""},{dish:"杂粮饭",method:""}] },
+                    { day: "周三", lunch: [{dish:"红烧大排（减盐代糖）",method:"红烧"},{dish:"清炒青菜",method:"清炒"},{dish:"杂粮饭+玉米",method:""}], dinner: [{dish:"厚切三文鱼（盒马）",method:"电商"},{dish:"蒜蓉西兰花",method:"蒜蓉"},{dish:"杂粮饭",method:""}] },
+                    { day: "周四", lunch: [{dish:"东泰祥冷面",method:"外出"}], dinner: [{dish:"烂糊肉丝",method:"炖"},{dish:"清炒生菜",method:"清炒"},{dish:"杂粮饭",method:""}] },
+                    { day: "周五", lunch: [{dish:"蒸鱼",method:"蒸"},{dish:"清炒毛豆",method:"清炒"},{dish:"杂粮饭+红薯",method:""}], dinner: [{dish:"白灼虾",method:"白灼"},{dish:"凉拌黄瓜",method:"凉拌"},{dish:"紫菜汤",method:""},{dish:"杂粮饭",method:""}] },
+                    { day: "周六", lunch: [{dish:"糖醋小排（代糖）",method:"糖醋"},{dish:"清炒土豆",method:"清炒"},{dish:"杂粮饭+玉米",method:""}], dinner: [{dish:"扇贝粉丝煲",method:"煮"},{dish:"清炒鸡毛菜",method:"清炒"},{dish:"杂粮饭",method:""}] },
+                    { day: "周日", lunch: [{dish:"甬小吉炒面",method:"外出"}], dinner: [{dish:"红烧鸭腿",method:"红烧"},{dish:"清炒水芹菜",method:"清炒"},{dish:"冬瓜汤",method:""},{dish:"杂粮饭",method:""}] }
+                ]
+            },
+            autumn: {
+                title: "秋季 · 第1周食谱",
+                days: [
+                    { day: "周一", lunch: [{dish:"清蒸桂花鱼",method:"清蒸"},{dish:"芋头烧肉（瘦肉）",method:"烧"},{dish:"杂粮饭+蒸红薯",method:""}], dinner: [{dish:"白灼虾",method:"白灼"},{dish:"清炒莲藕",method:"清炒"},{dish:"豆腐汤",method:""},{dish:"杂粮饭",method:""}] },
+                    { day: "周二", lunch: [{dish:"红烧牛肉（瘦牛腩，去油）",method:"红烧"},{dish:"清炒洋葱",method:"清炒"},{dish:"杂粮饭+玉米",method:""}], dinner: [{dish:"蒸三黄鸡",method:"蒸"},{dish:"清炒米苋",method:"清炒"},{dish:"杂粮饭",method:""}] },
+                    { day: "周三", lunch: [{dish:"葱爆牛肉",method:"葱爆"},{dish:"清炒茭白",method:"清炒"},{dish:"杂粮饭+红薯",method:""}], dinner: [{dish:"蒲烧鳗鱼（盒马）",method:"电商"},{dish:"蒜蓉西兰花",method:"蒜蓉"},{dish:"杂粮饭",method:""}] },
+                    { day: "周四", lunch: [{dish:"东泰祥冷面",method:"外出"}], dinner: [{dish:"烂糊肉丝",method:"炖"},{dish:"清炒青菜",method:"清炒"},{dish:"杂粮饭",method:""}] },
+                    { day: "周五", lunch: [{dish:"红烧猪蹄（改良版）",method:"红烧"},{dish:"清炒南瓜",method:"清炒"},{dish:"杂粮饭+玉米",method:""}], dinner: [{dish:"白切鸡",method:"白切"},{dish:"上汤生菜",method:"煮"},{dish:"杂粮饭",method:""}] },
+                    { day: "周六", lunch: [{dish:"糖醋小排（代糖）",method:"糖醋"},{dish:"清炒土豆",method:"清炒"},{dish:"杂粮饭+红薯",method:""}], dinner: [{dish:"扇贝蒸蛋",method:"蒸"},{dish:"清炒芹菜",method:"清炒"},{dish:"杂粮饭",method:""}] },
+                    { day: "周日", lunch: [{dish:"烤鸭（限量，去皮）",method:"外出"}], dinner: [{dish:"红烧鸭腿",method:"红烧"},{dish:"清炒荷兰豆",method:"清炒"},{dish:"萝卜汤",method:""},{dish:"杂粮饭",method:""}] }
+                ]
+            },
+            winter: {
+                title: "冬季 · 第1周食谱",
+                days: [
+                    { day: "周一", lunch: [{dish:"清蒸多宝鱼",method:"清蒸"},{dish:"牛骨萝卜汤（去浮油）",method:"炖"},{dish:"杂粮饭+烤红薯",method:""}], dinner: [{dish:"白灼虾",method:"白灼"},{dish:"清炒白菜",method:"清炒"},{dish:"豆腐汤",method:""},{dish:"杂粮饭",method:""}] },
+                    { day: "周二", lunch: [{dish:"红烧牛肉（瘦）",method:"红烧"},{dish:"清炒洋葱",method:"清炒"},{dish:"杂粮饭+玉米",method:""}], dinner: [{dish:"蒸三黄鸡",method:"蒸"},{dish:"清炒青菜",method:"清炒"},{dish:"杂粮饭",method:""}] },
+                    { day: "周三", lunch: [{dish:"葱爆牛肉（少油）",method:"葱爆"},{dish:"清炒土豆",method:"清炒"},{dish:"杂粮饭+红薯",method:""}], dinner: [{dish:"厚切三文鱼（盒马）",method:"电商"},{dish:"蒜蓉西兰花",method:"蒜蓉"},{dish:"杂粮饭",method:""}] },
+                    { day: "周四", lunch: [{dish:"东泰祥生煎（限1个）",method:"外出"}], dinner: [{dish:"烂糊肉丝",method:"炖"},{dish:"清炒生菜",method:"清炒"},{dish:"杂粮饭",method:""}] },
+                    { day: "周五", lunch: [{dish:"红烧猪蹄（去油减盐）",method:"红烧"},{dish:"清炒豆腐",method:"清炒"},{dish:"杂粮饭+玉米",method:""}], dinner: [{dish:"白切鸡",method:"白切"},{dish:"上汤米苋",method:"煮"},{dish:"杂粮饭",method:""}] },
+                    { day: "周六", lunch: [{dish:"糖醋小排（代糖）",method:"糖醋"},{dish:"清炒藕片",method:"清炒"},{dish:"杂粮饭+红薯",method:""}], dinner: [{dish:"扇贝粉丝煲",method:"煮"},{dish:"清炒鸡毛菜",method:"清炒"},{dish:"杂粮饭",method:""}] },
+                    { day: "周日", lunch: [{dish:"烤鸭（去皮，限量）",method:"外出"}], dinner: [{dish:"红烧鸭腿",method:"红烧"},{dish:"清炒水芹菜",method:"清炒"},{dish:"萝卜丝汤",method:""},{dish:"杂粮饭",method:""}] }
+                ]
+            }
+        };
+
+        // 可替换菜品映射（仅这些菜显示按钮）
+        const replaceOptions = {
+            "清蒸鲈鱼": ["葱油鲈鱼（少油）", "豆豉蒸鲈鱼（减盐）"],
+            "清蒸鲳鱼": ["酱烧鲳鱼（低脂）", "红烧鲳鱼（代糖）"],
+            "蒸鱼": ["煎鱼（少油）", "清炖鱼片"],
+            "红烧大排": ["糖醋小排（代糖）", "梅干菜㸆大排（减盐）"],
+            "红烧猪蹄": ["黄豆烧猪蹄（去浮油）", "花生炖猪蹄（低盐）"],
+            "葱爆牛肉": ["洋葱炒牛肉（少油）", "黑椒牛肉（无糖）"],
+            "烂糊肉丝": ["肉丝炒豆腐", "肉丝烩双菇"]
+        };
+
+        // 渲染菜单
+        function renderMenu(season) {
+            const data = menuData[season];
+            if (!data) return;
+            
+            let html = `<div class="week-header">
+                            <h2>${data.title}</h2>
+                            <div style="font-size: 0.9em; color: #666;">每周食材统一，每日菜式不同</div>
+                        </div>`;
+
+            data.days.forEach(day => {
+                html += `<div class="meal-day">
+                            <div class="day-title">${day.day}</div>
+                            <div class="meal-slot">`;
+                
+                // 午餐
+                html += `<div class="meal-card">
+                            <div class="meal-label">午餐</div>`;
+                day.lunch.forEach((item, idx) => {
+                    const dishBase = item.dish.split("（")[0];
+                    const hasReplace = replaceOptions.hasOwnProperty(dishBase);
+                    html += `<div class="dish-item">
+                                <div class="dish-text">
+                                    <span class="tag">${item.method || '家常'}</span>${item.dish}
+                                </div>`;
+                    if (hasReplace) {
+                        html += `<button class="replace-btn-inline" onclick="toggleReplaceInline(this, '${dishBase}', '${season}')">🔄</button>`;
+                    }
+                    html += `</div>`;
+                });
+                html += `</div>`;
+
+                // 晚餐
+                html += `<div class="meal-card">
+                            <div class="meal-label">晚餐</div>`;
+                day.dinner.forEach((item, idx) => {
+                    const dishBase = item.dish.split("（")[0];
+                    const hasReplace = replaceOptions.hasOwnProperty(dishBase);
+                    html += `<div class="dish-item">
+                                <div class="dish-text">
+                                    <span class="tag">${item.method || '家常'}</span>${item.dish}
+                                </div>`;
+                    if (hasReplace) {
+                        html += `<button class="replace-btn-inline" onclick="toggleReplaceInline(this, '${dishBase}', '${season}')">🔄</button>`;
+                    }
+                    html += `</div>`;
+                });
+                html += `</div>`;
+
+                html += `</div></div>`;
+            });
+
+            // 添加提示
+            html += `
+                <div class="note-box">
+                    <div class="note-title">每日早餐建议</div>
+                    <p>无糖豆浆 + 全麦馒头 / 玉米 / 红薯（轮换）</p>
+                </div>
+                <div class="note-box">
+                    <div class="note-title">健康提示</div>
+                    <p>• 所有红烧/糖醋类使用代糖 + 减盐50%<br>                    • 猪蹄/鸭皮等高脂部位已做去脂处理<br>                    • 外出就餐每周≤2次，生煎/烤鸭限量<br>                    • 鱼类每周≥5餐，优先清蒸白灼</p>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="generatePDF()">📄 导出PDF</button>
+                    <button class="btn btn-secondary" onclick="generateList('${season}')">✅ 采购清单</button>
+                </div>`;
+
+            document.getElementById('weekPlan').innerHTML = html;
+        }
+
+        // 内联替换逻辑
+        function toggleReplaceInline(btn, dishBase, season) {
+            const currentText = btn.previousElementSibling.textContent.trim();
+            const options = replaceOptions[dishBase];
+            let currentOption = -1;
+            for (let j = 0; j < options.length; j++) {
+                if (currentText.includes(options[j].split("（")[0])) {
+                    currentOption = j;
+                    break;
+                }
+            }
+            const nextOption = options[(currentOption + 1) % options.length];
+            // 更新文本（保留原有标签）
+            const tagMatch = currentText.match(/^(.*?】)/);
+            const newContent = (tagMatch ? tagMatch[0] : '') + nextOption;
+            btn.previousElementSibling.innerHTML = newContent;
+        }
+
+        // 导出PDF
+        function generatePDF() {
+            const element = document.getElementById('weekPlan');
+            html2canvas(element).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jspdf.jsPDF('p', 'mm', 'a4');
+                const imgWidth = 210;
+                const pageHeight = 297;
+                const imgHeight = canvas.height * imgWidth / canvas.width;
+                let heightLeft = imgHeight;
+                let position = 0;
+
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+
+                while (heightLeft >= 0) {
+                    position = heightLeft - imgHeight;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                }
+
+                pdf.save('父母四季健康食谱.pdf');
+            });
+        }
+
+        // 采购清单
+        function generateList(season) {
+            const seasonNames = {spring:'春季', summer:'夏季', autumn:'秋季', winter:'冬季'};
+            const list = `【${seasonNames[season]}第1周采购清单】
+- 肉类：猪蹄（改良用）、大排、小排、牛肉（瘦）、鸡肉、鸭腿
+- 鱼类：鲈鱼、鲳鱼、三黄鸡、虾、扇贝、鳗鱼（盒马）
+- 蔬菜：当季绿叶菜（鸡毛菜/米苋/水芹菜等）、土豆、藕、芋头、洋葱、豆腐
+- 主食：杂粮米、玉米、红薯
+- 早餐：无糖豆浆
+- 外出：东泰祥、甬小吉（每周≤2次）`;
+            
+            if (confirm("复制采购清单到剪贴板？")) {
+                navigator.clipboard.writeText(list).then(() => {
+                    alert("✅ 已复制！可粘贴到购物App");
+                }).catch(() => {
+                    alert("请手动记录：\n\n" + list);
+                });
+            }
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            renderMenu('spring');
+            document.querySelectorAll('.season-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelector('.season-tab.active').classList.remove('active');
+                    tab.classList.add('active');
+                    renderMenu(tab.dataset.season);
+                });
+            });
+        });
+    </script>
+</body>
+</html>
